@@ -10,7 +10,7 @@ it('前提と比較結果を表示し、外部変更を反映して終了時に�
   const root = document.createElement('div');
   const unmount = mountEditor(root, { read: () => content } as ScopedHost<BusinessCase>);
   expect(root.textContent).toContain('年間売上');
-  expect(root.textContent).toContain('641127690');
+  expect(root.textContent).toContain('6.41 億円');
   expect(root.textContent).toContain('18.0912%');
   expect(root.textContent).toContain('5年');
   content = structuredClone(content); content.assumptions[0].name = '新しい前提';

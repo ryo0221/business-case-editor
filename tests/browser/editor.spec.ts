@@ -1,12 +1,40 @@
 import { expect, test } from '@playwright/test';
-test('収支の前提とシナリオ比較を表示し、保存後に開き直す', async ({ page }) => {
+test('収支の比較と感応度を表示し、引用中の前提の削除を拒否する', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('table')).toHaveCount(2);
-  await expect(page.getByRole('table').first()).toContainText('年間売上');
-  await expect(page.getByRole('table').nth(1)).toContainText('641127690');
-  await expect(page.getByRole('table').nth(1)).toContainText('18.0912%');
-  await page.getByRole('button', { name: '保存' }).click();
+  await expect(page.getByRole('table').first()).toContainText('6.41 億円');
+  await expect(page.getByRole('table').first()).toContainText('18.0912%');
+  await expect(page.locator('.sensitivity').filter({ hasText: '年間売上' })).toContainText('+5.40 億円');
+  await page.locator('.assumption').filter({ hasText: '年間売上' }).getByRole('button', { name: '削除' }).click();
+  await expect(page.getByRole('alert').first()).toContainText('参照中の前提は削除できません');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.locator('#status')).toHaveText('保存しました。');
   await page.reload();
-  await expect(page.getByRole('table').nth(1)).toContainText('641127690');
+  await expect(page.getByRole('table').first()).toContainText('6.41 億円');
+});
+
+test('年次値の貼り付け、競合、読み取り専用と提案を扱う', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('.assumption').filter({ hasText: '年間売上' }).getByRole('button', { name: '編集' }).click();
+  const dialog = page.getByRole('dialog');
+  const first = dialog.getByLabel('年1', { exact: true });
+  await first.evaluate(node => { const d = new DataTransfer(); d.setData('text/plain', '1\t2'); node.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, clipboardData: d })); });
+  await expect(dialog.getByRole('alert')).toContainText('10個');
+  await expect(first).toHaveValue('200000000');
+  await first.evaluate(node => { const d = new DataTransfer(); d.setData('text/plain', Array.from({length: 10}, (_, i) => String(200000001 + i)).join('\t')); node.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, clipboardData: d })); });
+  await expect(first).toHaveValue('200000001');
+  await page.getByLabel('読み取り専用').evaluate((node: HTMLInputElement) => { node.checked = true; node.dispatchEvent(new Event('change')); });
+  await dialog.getByRole('button', { name: '適用' }).click();
+  await expect(dialog).toBeVisible();
+  await expect(first).toHaveValue('200000001');
+  await dialog.getByRole('button', { name: '取消' }).click();
+  await page.getByLabel('読み取り専用').uncheck();
+  await page.getByRole('button', { name: '提案を確認' }).click();
+  await expect(page.locator('#proposal-preview')).toContainText('4 → 5');
+  await page.getByRole('button', { name: '提案を戻す' }).click();
+  await expect(page.locator('#proposal-preview')).toBeEmpty();
+  await page.getByRole('button', { name: '提案を確認' }).click();
+  await page.getByRole('button', { name: '提案を採る' }).click();
+  await expect(page.locator('.assumption').filter({ hasText: '為替' })).toContainText('5 JPY_per_THB');
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(page.locator('.assumption').filter({ hasText: '為替' })).toContainText('4 JPY_per_THB');
 });

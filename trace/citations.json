@@ -540,6 +540,38 @@
   {
    "from": "tests/package.test.ts",
    "to": "CMD-14"
+  },
+  {
+   "from": "src/Editor.ts",
+   "to": "SCR-02"
+  },
+  {
+   "from": "src/Editor.ts",
+   "to": "SCR-04"
+  },
+  {
+   "from": "src/styles.css",
+   "to": "SCR-02"
+  },
+  {
+   "from": "src/styles.css",
+   "to": "SCR-04"
+  },
+  {
+   "from": "tests/browser/editor.spec.ts",
+   "to": "SCR-02"
+  },
+  {
+   "from": "tests/browser/editor.spec.ts",
+   "to": "SCR-03"
+  },
+  {
+   "from": "tests/browser/editor.spec.ts",
+   "to": "SCR-04"
+  },
+  {
+   "from": "dev/main.ts",
+   "to": "OP-05"
   }
  ],
  "exemptions": []
