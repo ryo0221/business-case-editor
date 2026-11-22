@@ -404,6 +404,38 @@
   {
    "from": "tests/business-case.test.ts",
    "to": "SCR-03"
+  },
+  {
+   "from": "src/business-commands.ts",
+   "to": "CMD-01"
+  },
+  {
+   "from": "src/business-commands.ts",
+   "to": "CMD-02"
+  },
+  {
+   "from": "src/business-commands.ts",
+   "to": "CMD-03"
+  },
+  {
+   "from": "src/business-commands.ts",
+   "to": "CMD-15"
+  },
+  {
+   "from": "tests/business-commands.test.ts",
+   "to": "CMD-01"
+  },
+  {
+   "from": "tests/business-commands.test.ts",
+   "to": "CMD-02"
+  },
+  {
+   "from": "tests/business-commands.test.ts",
+   "to": "CMD-03"
+  },
+  {
+   "from": "tests/business-commands.test.ts",
+   "to": "CMD-15"
   }
  ],
  "exemptions": []
