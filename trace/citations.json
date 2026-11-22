@@ -1,5 +1,86 @@
 {
  "note": "引用の表。from の項目が to の項目をもとにしている。",
- "citations": [],
+ "citations": [
+  {
+   "from": "CMD-01",
+   "to": "OP-01"
+  },
+  {
+   "from": "CMD-02",
+   "to": "OP-01"
+  },
+  {
+   "from": "CMD-02",
+   "to": "OP-05"
+  },
+  {
+   "from": "CMD-03",
+   "to": "OP-01"
+  },
+  {
+   "from": "CMD-04",
+   "to": "OP-02"
+  },
+  {
+   "from": "CMD-05",
+   "to": "OP-02"
+  },
+  {
+   "from": "CMD-06",
+   "to": "OP-02"
+  },
+  {
+   "from": "CMD-07",
+   "to": "OP-02"
+  },
+  {
+   "from": "CMD-08",
+   "to": "OP-02"
+  },
+  {
+   "from": "CMD-08",
+   "to": "OP-03"
+  },
+  {
+   "from": "CMD-09",
+   "to": "OP-04"
+  },
+  {
+   "from": "CMD-10",
+   "to": "OP-06"
+  },
+  {
+   "from": "CMD-11",
+   "to": "OP-05"
+  },
+  {
+   "from": "CMD-12",
+   "to": "OP-02"
+  },
+  {
+   "from": "CMD-12",
+   "to": "OP-03"
+  },
+  {
+   "from": "CMD-13",
+   "to": "OP-04"
+  },
+  {
+   "from": "CMD-13",
+   "to": "OP-06"
+  },
+  {
+   "from": "CMD-14",
+   "to": "OP-06"
+  },
+  {
+   "from": "CMD-15",
+   "to": "OP-05"
+  },
+  {
+   "from": "CMD-15",
+   "to": "OP-06"
+  }
+ ],
  "exemptions": []
 }
