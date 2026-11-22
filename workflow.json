@@ -144,7 +144,10 @@
    "acceptedOrg": "org_43ebefe4ad314d25"
   },
   "screen": {
-   "state": "未着手"
+   "state": "受け入れ済み",
+   "acceptedAt": "2026-11-22T05:29:34.793Z",
+   "acceptedBy": "早川 葵（P-f76d97e41ec6a817）",
+   "acceptedOrg": "org_43ebefe4ad314d25"
   },
   "build": {
    "state": "未着手"
