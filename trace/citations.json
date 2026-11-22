@@ -80,6 +80,282 @@
   {
    "from": "CMD-15",
    "to": "OP-06"
+  },
+  {
+   "from": "SCR-01",
+   "to": "OP-01"
+  },
+  {
+   "from": "SCR-01",
+   "to": "OP-02"
+  },
+  {
+   "from": "SCR-01",
+   "to": "OP-03"
+  },
+  {
+   "from": "SCR-01",
+   "to": "OP-04"
+  },
+  {
+   "from": "SCR-01",
+   "to": "OP-05"
+  },
+  {
+   "from": "SCR-01",
+   "to": "OP-06"
+  },
+  {
+   "from": "SCR-01",
+   "to": "CMD-01"
+  },
+  {
+   "from": "SCR-01",
+   "to": "CMD-02"
+  },
+  {
+   "from": "SCR-01",
+   "to": "CMD-03"
+  },
+  {
+   "from": "SCR-01",
+   "to": "CMD-04"
+  },
+  {
+   "from": "SCR-01",
+   "to": "CMD-05"
+  },
+  {
+   "from": "SCR-01",
+   "to": "CMD-06"
+  },
+  {
+   "from": "SCR-01",
+   "to": "CMD-07"
+  },
+  {
+   "from": "SCR-01",
+   "to": "CMD-08"
+  },
+  {
+   "from": "SCR-01",
+   "to": "CMD-09"
+  },
+  {
+   "from": "SCR-01",
+   "to": "CMD-10"
+  },
+  {
+   "from": "SCR-01",
+   "to": "CMD-11"
+  },
+  {
+   "from": "SCR-01",
+   "to": "CMD-12"
+  },
+  {
+   "from": "SCR-01",
+   "to": "CMD-13"
+  },
+  {
+   "from": "SCR-01",
+   "to": "CMD-14"
+  },
+  {
+   "from": "SCR-01",
+   "to": "CMD-15"
+  },
+  {
+   "from": "SCR-02",
+   "to": "OP-01"
+  },
+  {
+   "from": "SCR-02",
+   "to": "OP-02"
+  },
+  {
+   "from": "SCR-02",
+   "to": "CMD-01"
+  },
+  {
+   "from": "SCR-02",
+   "to": "CMD-02"
+  },
+  {
+   "from": "SCR-02",
+   "to": "CMD-03"
+  },
+  {
+   "from": "SCR-02",
+   "to": "CMD-04"
+  },
+  {
+   "from": "SCR-02",
+   "to": "CMD-05"
+  },
+  {
+   "from": "SCR-02",
+   "to": "CMD-06"
+  },
+  {
+   "from": "SCR-02",
+   "to": "CMD-07"
+  },
+  {
+   "from": "SCR-03",
+   "to": "OP-01"
+  },
+  {
+   "from": "SCR-03",
+   "to": "OP-02"
+  },
+  {
+   "from": "SCR-03",
+   "to": "OP-03"
+  },
+  {
+   "from": "SCR-03",
+   "to": "OP-04"
+  },
+  {
+   "from": "SCR-03",
+   "to": "OP-05"
+  },
+  {
+   "from": "SCR-03",
+   "to": "OP-06"
+  },
+  {
+   "from": "SCR-03",
+   "to": "CMD-01"
+  },
+  {
+   "from": "SCR-03",
+   "to": "CMD-02"
+  },
+  {
+   "from": "SCR-03",
+   "to": "CMD-03"
+  },
+  {
+   "from": "SCR-03",
+   "to": "CMD-04"
+  },
+  {
+   "from": "SCR-03",
+   "to": "CMD-05"
+  },
+  {
+   "from": "SCR-03",
+   "to": "CMD-06"
+  },
+  {
+   "from": "SCR-03",
+   "to": "CMD-07"
+  },
+  {
+   "from": "SCR-03",
+   "to": "CMD-08"
+  },
+  {
+   "from": "SCR-03",
+   "to": "CMD-09"
+  },
+  {
+   "from": "SCR-03",
+   "to": "CMD-10"
+  },
+  {
+   "from": "SCR-03",
+   "to": "CMD-11"
+  },
+  {
+   "from": "SCR-03",
+   "to": "CMD-12"
+  },
+  {
+   "from": "SCR-03",
+   "to": "CMD-13"
+  },
+  {
+   "from": "SCR-03",
+   "to": "CMD-14"
+  },
+  {
+   "from": "SCR-03",
+   "to": "CMD-15"
+  },
+  {
+   "from": "SCR-04",
+   "to": "OP-02"
+  },
+  {
+   "from": "SCR-04",
+   "to": "OP-03"
+  },
+  {
+   "from": "SCR-04",
+   "to": "OP-04"
+  },
+  {
+   "from": "SCR-04",
+   "to": "OP-06"
+  },
+  {
+   "from": "SCR-04",
+   "to": "CMD-01"
+  },
+  {
+   "from": "SCR-04",
+   "to": "CMD-02"
+  },
+  {
+   "from": "SCR-04",
+   "to": "CMD-03"
+  },
+  {
+   "from": "SCR-04",
+   "to": "CMD-04"
+  },
+  {
+   "from": "SCR-04",
+   "to": "CMD-05"
+  },
+  {
+   "from": "SCR-04",
+   "to": "CMD-06"
+  },
+  {
+   "from": "SCR-04",
+   "to": "CMD-07"
+  },
+  {
+   "from": "SCR-04",
+   "to": "CMD-08"
+  },
+  {
+   "from": "SCR-04",
+   "to": "CMD-09"
+  },
+  {
+   "from": "SCR-04",
+   "to": "CMD-10"
+  },
+  {
+   "from": "SCR-04",
+   "to": "CMD-12"
+  },
+  {
+   "from": "SCR-04",
+   "to": "CMD-13"
+  },
+  {
+   "from": "SCR-04",
+   "to": "CMD-14"
+  },
+  {
+   "from": "SCR-04",
+   "to": "CMD-15"
   }
  ],
  "exemptions": []
