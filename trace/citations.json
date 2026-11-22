@@ -484,6 +484,62 @@
   {
    "from": "tests/business-commands.test.ts",
    "to": "CMD-09"
+  },
+  {
+   "from": "src/model.ts",
+   "to": "CMD-10"
+  },
+  {
+   "from": "src/extension.ts",
+   "to": "CMD-14"
+  },
+  {
+   "from": "src/operations.ts",
+   "to": "CMD-02"
+  },
+  {
+   "from": "src/Editor.ts",
+   "to": "SCR-01"
+  },
+  {
+   "from": "src/Editor.ts",
+   "to": "SCR-03"
+  },
+  {
+   "from": "src/styles.css",
+   "to": "SCR-01"
+  },
+  {
+   "from": "src/commands.ts",
+   "to": "CMD-02"
+  },
+  {
+   "from": "tests/operations.test.ts",
+   "to": "CMD-02"
+  },
+  {
+   "from": "tests/surface.test.ts",
+   "to": "SCR-01"
+  },
+  {
+   "from": "tests/browser/editor.spec.ts",
+   "to": "SCR-01"
+  },
+  {
+   "from": "tests/browser/editor.spec.ts",
+   "to": "CMD-14"
+  },
+  {
+   "from": "tests/paobub-package.test.ts",
+   "to": "CMD-14"
+  },
+  {
+   "from": "tests/package.test.ts",
+   "to": "CMD-02"
+  },
+  {
+   "from": "tests/package.test.ts",
+   "to": "CMD-14"
   }
  ],
  "exemptions": []
