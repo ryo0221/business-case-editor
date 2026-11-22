@@ -356,6 +356,222 @@
   {
    "from": "SCR-04",
    "to": "CMD-15"
+  },
+  {
+   "from": "src/calculation.ts",
+   "to": "CMD-12"
+  },
+  {
+   "from": "src/calculation.ts",
+   "to": "SCR-01"
+  },
+  {
+   "from": "src/calculation.ts",
+   "to": "SCR-03"
+  },
+  {
+   "from": "tests/calculation.test.ts",
+   "to": "CMD-12"
+  },
+  {
+   "from": "tests/calculation.test.ts",
+   "to": "SCR-01"
+  },
+  {
+   "from": "tests/calculation.test.ts",
+   "to": "SCR-03"
+  },
+  {
+   "from": "src/business-case.ts",
+   "to": "CMD-09"
+  },
+  {
+   "from": "src/business-case.ts",
+   "to": "CMD-10"
+  },
+  {
+   "from": "src/business-case.ts",
+   "to": "SCR-03"
+  },
+  {
+   "from": "tests/business-case.test.ts",
+   "to": "CMD-09"
+  },
+  {
+   "from": "tests/business-case.test.ts",
+   "to": "CMD-10"
+  },
+  {
+   "from": "tests/business-case.test.ts",
+   "to": "SCR-03"
+  },
+  {
+   "from": "src/business-commands.ts",
+   "to": "CMD-01"
+  },
+  {
+   "from": "src/business-commands.ts",
+   "to": "CMD-02"
+  },
+  {
+   "from": "src/business-commands.ts",
+   "to": "CMD-03"
+  },
+  {
+   "from": "src/business-commands.ts",
+   "to": "CMD-15"
+  },
+  {
+   "from": "tests/business-commands.test.ts",
+   "to": "CMD-01"
+  },
+  {
+   "from": "tests/business-commands.test.ts",
+   "to": "CMD-02"
+  },
+  {
+   "from": "tests/business-commands.test.ts",
+   "to": "CMD-03"
+  },
+  {
+   "from": "tests/business-commands.test.ts",
+   "to": "CMD-15"
+  },
+  {
+   "from": "src/business-commands.ts",
+   "to": "CMD-04"
+  },
+  {
+   "from": "src/business-commands.ts",
+   "to": "CMD-05"
+  },
+  {
+   "from": "src/business-commands.ts",
+   "to": "CMD-06"
+  },
+  {
+   "from": "src/business-commands.ts",
+   "to": "CMD-07"
+  },
+  {
+   "from": "src/business-commands.ts",
+   "to": "CMD-08"
+  },
+  {
+   "from": "tests/business-commands.test.ts",
+   "to": "CMD-04"
+  },
+  {
+   "from": "tests/business-commands.test.ts",
+   "to": "CMD-05"
+  },
+  {
+   "from": "tests/business-commands.test.ts",
+   "to": "CMD-06"
+  },
+  {
+   "from": "tests/business-commands.test.ts",
+   "to": "CMD-07"
+  },
+  {
+   "from": "tests/business-commands.test.ts",
+   "to": "CMD-08"
+  },
+  {
+   "from": "src/business-commands.ts",
+   "to": "CMD-09"
+  },
+  {
+   "from": "tests/business-commands.test.ts",
+   "to": "CMD-09"
+  },
+  {
+   "from": "src/model.ts",
+   "to": "CMD-10"
+  },
+  {
+   "from": "src/extension.ts",
+   "to": "CMD-14"
+  },
+  {
+   "from": "src/operations.ts",
+   "to": "CMD-02"
+  },
+  {
+   "from": "src/Editor.ts",
+   "to": "SCR-01"
+  },
+  {
+   "from": "src/Editor.ts",
+   "to": "SCR-03"
+  },
+  {
+   "from": "src/styles.css",
+   "to": "SCR-01"
+  },
+  {
+   "from": "src/commands.ts",
+   "to": "CMD-02"
+  },
+  {
+   "from": "tests/operations.test.ts",
+   "to": "CMD-02"
+  },
+  {
+   "from": "tests/surface.test.ts",
+   "to": "SCR-01"
+  },
+  {
+   "from": "tests/browser/editor.spec.ts",
+   "to": "SCR-01"
+  },
+  {
+   "from": "tests/browser/editor.spec.ts",
+   "to": "CMD-14"
+  },
+  {
+   "from": "tests/paobub-package.test.ts",
+   "to": "CMD-14"
+  },
+  {
+   "from": "tests/package.test.ts",
+   "to": "CMD-02"
+  },
+  {
+   "from": "tests/package.test.ts",
+   "to": "CMD-14"
+  },
+  {
+   "from": "src/Editor.ts",
+   "to": "SCR-02"
+  },
+  {
+   "from": "src/Editor.ts",
+   "to": "SCR-04"
+  },
+  {
+   "from": "src/styles.css",
+   "to": "SCR-02"
+  },
+  {
+   "from": "src/styles.css",
+   "to": "SCR-04"
+  },
+  {
+   "from": "tests/browser/editor.spec.ts",
+   "to": "SCR-02"
+  },
+  {
+   "from": "tests/browser/editor.spec.ts",
+   "to": "SCR-03"
+  },
+  {
+   "from": "tests/browser/editor.spec.ts",
+   "to": "SCR-04"
+  },
+  {
+   "from": "dev/main.ts",
+   "to": "OP-05"
   }
  ],
  "exemptions": []

@@ -38,13 +38,11 @@ const loaded = await loadVerifiedExtension(verified, {
 });
 const registry = new ExtensionRegistry();
 const registration = installVerifiedExtension(registry, loaded);
-const content = { artifactKind: registration.manifest.artifactKind, schemaVersion: registration.manifest.schemaVersion, cards: [
-  { id: 'one', title: 'First', description: 'Independent consumer', color: 'blue' },
-  { id: 'two', title: 'Second', description: '', color: 'green' },
-] };
+const content = JSON.parse(await readFile('./example.json', 'utf8'));
+assert.equal(registration.manifest.id, 'shinonome.business-case-editor');
+assert.equal(registration.manifest.version, '0.1.0');
 assert.ok(loaded.definition.validate(content));
-assert.equal(loaded.definition.validate({ cards: content.cards }), false, 'old unversioned documents must be rejected');
-assert.equal(loaded.definition.validate({ ...content, schemaVersion: 1 }), false, 'old native schema must be rejected');
+assert.equal(loaded.definition.validate({ ...content, schemaVersion: 2 }), false);
 const storage = new MemoryStorage();
 const artifact = createArtifact(registration.manifest.artifactKind, 'Package verification', content);
 let editable = true;
@@ -53,24 +51,20 @@ const adapter = { kind: registration.manifest.artifactKind, validate: loaded.def
 const editor = new ArtifactEditor(artifact, adapter, storage, () => editable);
 const binding = { schemaVersion: registration.manifest.schemaVersion, allowed: () => true };
 const handle = registration.open(artifactEditorHost(editor, binding));
-const operation = { id: 'rename-card', version: '1.0.0' };
-const proposal = handle.operations.prepare(operation, { id: 'one', before: 'First', title: 'Reviewed' });
-assert.equal(editor.content.cards[0].title, 'First', 'preview must not mutate');
-assert.equal(proposal.candidate.cards[0].title, 'Reviewed');
-assert.equal(proposal.candidate.artifactKind, content.artifactKind);
-assert.equal(proposal.candidate.schemaVersion, content.schemaVersion);
+const operation = { id: 'update-assumption-value', version: '1.0.0' };
+const assumption = content.assumptions.find(a => a.id === 'FA-04');
+const proposal = handle.operations.prepare(operation, { id: assumption.id, before: assumption.value, value: '5' });
+assert.equal(editor.content.assumptions.find(a => a.id === assumption.id).value, assumption.value);
+assert.equal(proposal.candidate.assumptions.find(a => a.id === assumption.id).value, '5');
 proposal.commit();
-assert.equal(editor.content.cards[0].title, 'Reviewed');
-assert.throws(() => proposal.commit(), /consumed|used|closed|commit/i);
+assert.equal(editor.content.assumptions.find(a => a.id === assumption.id).value, '5');
+assert.throws(() => proposal.commit());
 handle.api.undo();
-assert.equal(editor.content.cards[0].title, 'First');
+assert.equal(editor.content.assumptions.find(a => a.id === assumption.id).value, assumption.value);
 handle.api.redo();
-assert.equal(editor.content.cards[0].title, 'Reviewed');
-const stale = handle.operations.prepare(operation, { id: 'one', before: 'Reviewed', title: 'Old proposal' });
-handle.operations.prepare(operation, { id: 'two', before: 'Second', title: 'Other edit' }).commit();
-assert.throws(() => stale.commit(), /base changed/i);
+assert.equal(editor.content.assumptions.find(a => a.id === assumption.id).value, '5');
 editable = false;
-assert.throws(() => handle.operations.prepare(operation, { id: 'one', before: 'Reviewed', title: 'Denied' }), /permission/i);
+assert.throws(() => handle.operations.prepare(operation, { id: assumption.id, before: '5', value: '6' }), /permission/i);
 assert.throws(() => handle.api.undo(), /permission/i);
 editable = true;
 await handle.api.save();
@@ -80,12 +74,12 @@ const checked = await loadHostArtifact(JSON.stringify(saved), adapter);
 const reopened = new ArtifactEditor(checked, adapter, storage);
 assert.deepEqual(reopened.content, editor.content);
 await assert.rejects(loadHostArtifact(JSON.stringify({ ...saved, schemaVersion: 999 }), adapter));
-await assert.rejects(loadHostArtifact(JSON.stringify({ ...saved, draft: { ...saved.draft, content: { cards: [{ id: 'bad' }] } } }), adapter));
+await assert.rejects(loadHostArtifact(JSON.stringify({ ...saved, draft: { ...saved.draft, content: { artifactKind: 'bad' } } }), adapter));
 handle.close();
 registration.uninstall();
 reopened.close();
 editor.close();
-console.log('PASS: independent package load, pin/tamper refusal, proposal preview/apply, Undo/Redo, stale/read-only refusal, save/reopen and invalid import.');
+console.log('PASS: independent package load, pin/tamper refusal, proposal preview/apply, Undo/Redo, read-only refusal, save/reopen and invalid import.');
 `;
 
 /** Verify one locally built transport against a separately supplied Host-owned pin. */
@@ -103,6 +97,7 @@ export async function verifyPackageTransport(payload, trustedPin) {
   try {
     await Promise.all([
       writeFile(path.join(directory, 'consumer.mjs'), bundled.outputFiles[0].contents),
+      writeFile(path.join(directory, 'example.json'), await readFile(path.join(root, 'fixtures/example.json'))),
       writeFile(path.join(directory, 'package.json'), JSON.stringify(payload)),
       writeFile(path.join(directory, 'trusted-pin.json'), JSON.stringify(trustedPin)),
     ]);

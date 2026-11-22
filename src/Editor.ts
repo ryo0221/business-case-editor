@@ -1,214 +1,51 @@
 import type { ScopedHost } from '@editor-platform/extension-contract';
-import { addCard, moveCard, removeCard, updateCard } from './commands';
-import { CARD_COLORS, type Card, type CardDocument } from './model';
+import type { Assumption, BusinessCase, DecimalValue, Scenario } from './business-case';
+import { calculate, type CalculationInput } from './calculation';
+import { acceptScenario, addAssumption, createBusinessSession, removeAssumption, updateAssumption, addScenarioReference, removeScenarioReference, setScenarioOverride, removeScenarioOverride } from './business-commands';
 import styles from './styles.css?inline';
 
-function element<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string, className?: string) {
-  const node = document.createElement(tag);
-  if (text !== undefined) node.textContent = text;
-  if (className) node.className = className;
-  return node;
-}
+function el<K extends keyof HTMLElementTagNameMap>(tag: K, value?: string): HTMLElementTagNameMap[K] { const n = document.createElement(tag); if (value !== undefined) n.textContent = value; return n; }
+function button(label: string, click: () => void): HTMLButtonElement { const b = el('button', label); b.type = 'button'; b.onclick = click; return b; }
+function input(value: string, label: string): HTMLInputElement { const i = el('input'); i.value = value; i.setAttribute('aria-label', label); return i; }
+function select(values: [string, string][], value: string, label: string): HTMLSelectElement { const s = el('select'); s.setAttribute('aria-label', label); for (const [v, name] of values) { const o = el('option', name); o.value = v; s.append(o); } s.value = value; return s; }
+const labels: Record<string, string> = { base: '基本', optimistic: '楽観', pessimistic: '悲観', actual: '実績', forecast: '予測', assumption: '仮定', calculated: '計算' };
+function calculationInput(doc: BusinessCase, scenario: Scenario): CalculationInput { const get = (role: keyof BusinessCase['calculation']): DecimalValue => { const id = doc.calculation[role]; return scenario.overrides.find(o => o.assumptionId === id)?.value ?? doc.assumptions.find(a => a.id === id)!.value; }; return { version: doc.calculation.version, revenueTHB: get('revenueTHB'), costJPY: get('costJPY'), initialInvestmentJPY: get('initialInvestmentJPY') as string, exchangeRate: get('exchangeRate') as string, taxRate: get('taxRate') as string, discountRate: get('discountRate') as string }; }
+function scaled(value: string, factor: bigint): string { const negative = value.startsWith('-'); const [whole, fraction = ''] = (negative ? value.slice(1) : value).split('.'); const n = BigInt(whole + fraction) * factor * (negative ? -1n : 1n); const digits = (n < 0n ? -n : n).toString().padStart(fraction.length + 3, '0'); const places = fraction.length + 2; const tail = digits.slice(-places).replace(/0+$/, ''); return (n < 0n ? '-' : '') + digits.slice(0, -places) + (tail ? '.' + tail : ''); }
+const units: Record<string, string> = { JPY: '円', THB: 'THB', unit: '個', percent: '%', year: '年', JPY_per_THB: '円/THB' };
+function grouped(value: string): string { return value.replace(/^-?\d+/, part => part.replace(/\B(?=(\d{3})+(?!\d))/g, ',')); }
+function assumptionValue(value: string, unit: string, oku: boolean): string { if (unit === 'JPY') { const formatted = money(value, oku); return oku ? formatted.replace(/\.00 億円$/, ' 億円') : formatted; } return grouped(value); }
+function money(value: string, oku: boolean): string { const neg = value.startsWith('-'); const [whole, fraction = ''] = (neg ? value.slice(1) : value).split('.'); if (oku) { const scale = 10n ** BigInt(Math.max(0, fraction.length)); const hundredths = (BigInt(whole + fraction) * 100n + scale * 50000000n) / (scale * 100000000n); return (neg && hundredths ? '-' : '') + grouped((hundredths / 100n).toString()) + '.' + (hundredths % 100n).toString().padStart(2, '0') + ' 億円'; } return (neg ? '-' : '') + whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (fraction ? '.' + fraction : '') + ' 円'; }
 
-/** A small DOM Surface. Native content and commands also work without a browser. */
-export function mountEditor(container: HTMLElement, host: ScopedHost<CardDocument>): () => void {
-  const root = element('section', undefined, 'ep-card-editor');
-  root.setAttribute('aria-label', 'カードEditor');
-  const style = element('style', styles);
-  const status = element('p', '', 'ep-card-status');
-  status.setAttribute('role', 'status');
-  const toolbar = element('div', undefined, 'ep-card-toolbar');
-  const count = element('span', '', 'ep-card-count');
-  const add = element('button', '＋ カードを追加', 'ep-card-primary');
-  add.type = 'button';
-  const list = element('div', undefined, 'ep-card-list');
-  list.setAttribute('role', 'list');
-  toolbar.append(count, add);
-  root.append(style, toolbar, list, status);
-  container.append(root);
-  const dialogCleanups = new Set<() => void>();
-  let renderedContent = '';
-
-  function report(error: unknown) {
-    status.textContent = error instanceof Error ? error.message : '操作を完了できませんでした。';
+export function mountEditor(container: HTMLElement, host: ScopedHost<BusinessCase>): () => void {
+  const root = el('section'); root.className = 'business-editor'; root.setAttribute('aria-label', '収支の比較'); const style = el('style', styles), notice = el('p'), content = el('div'), overlay = el('div'); notice.setAttribute('role', 'alert'); root.append(style, notice, content, overlay); container.append(root);
+  const session = createBusinessSession(); let rendered = '', oku = true, selected = '', annualScenario = '', dialogOpen = false; const expanded = new Set<string>(); session.observe(host.read());
+  const report = (error: unknown) => { notice.textContent = error instanceof Error ? error.message : '操作できませんでした。'; };
+  function perform(action: () => void): boolean { try { action(); notice.textContent = ''; render(host.read()); return true; } catch (error) { report(error); return false; } }
+  function edit(original?: Assumption) {
+    const doc = host.read(); const initial: Assumption = original ? structuredClone(original) : { id: '', name: '', description: '', value: '0', unit: 'JPY', kind: 'assumption', source: { text: '', projectId: '' }, dependsOn: [] };
+    const dialog = el('dialog'); dialog.setAttribute('aria-label', original ? `${initial.name}を編集` : '前提を追加'); const form = el('form'); form.method = 'dialog'; dialog.append(form); overlay.replaceChildren(dialog); dialogOpen = true;
+    const field = (name: string, node: HTMLElement) => { const l = el('label'); l.append(el('span', name), node); form.append(l); };
+    const name = input(initial.name, '名前'), description = input(initial.description, '説明'), unit = select(['JPY','THB','unit','percent','year','JPY_per_THB'].map(x => [x,units[x]]), initial.unit, '単位');
+    const kind = select([['actual','● 実績'],['forecast','● 予測'],['assumption','● 仮定'],['calculated','● 計算']], initial.kind, '種類'); kind.className = 'kind'; kind.dataset.kind = kind.value; kind.onchange = () => { kind.dataset.kind = kind.value; };
+    const sourceText = input(initial.source.text, '出所の説明'), sourceType = select([['projectId','Project ID'],['url','URL']], initial.source.url ? 'url' : 'projectId', '出所の種類'), sourceValue = input(initial.source.url ?? initial.source.projectId ?? '', '出所');
+    field('名前', name); field('説明', description); field('単位', unit); field('種類', kind); field('出所の説明', sourceText); field('出所の種類', sourceType); field('URL または Project ID', sourceValue);
+    const dependencies = el('fieldset'); dependencies.append(el('legend', '計算の依存先')); const checks: HTMLInputElement[] = []; for (const a of doc.assumptions.filter(a => a.id !== initial.id)) { const check = el('input'); check.type = 'checkbox'; check.value = a.id; check.checked = initial.dependsOn.includes(a.id); const l = el('label'); l.append(check, document.createTextNode(`${a.id} ${a.name}`)); dependencies.append(l); checks.push(check); } form.append(dependencies);
+    const mode = select([['scalar','単一値'],['annual','年次値']], Array.isArray(initial.value) ? 'annual' : 'scalar', '値の形式'); field('値の形式', mode); const values = el('div'); values.className = 'annual-inputs'; form.append(values); let inputs: HTMLInputElement[] = [];
+    const makeValues = () => { values.replaceChildren(); const annual = mode.value === 'annual'; const old = inputs.map(i => i.value); const arr = Array.isArray(initial.value) ? initial.value : Array<string>(10).fill(initial.value); inputs = Array.from({length: annual ? 10 : 1}, (_, i) => { const x = input(old[i] ?? arr[i] ?? '0', annual ? `年${i+1}` : '値'); const l = el('label'); l.append(el('span', annual ? `年${i+1}` : '値'), x); values.append(l); return x; }); };
+    makeValues(); mode.onchange = makeValues; const error = el('p'); error.setAttribute('role','alert'); form.append(error);
+    values.addEventListener('paste', event => { if (mode.value !== 'annual') return; const text = event.clipboardData?.getData('text') ?? ''; if (!/[\t\r\n]/.test(text)) return; event.preventDefault(); const clean = text.trim(); const parts = /\t/.test(clean) && /[\r\n]/.test(clean) ? [] : clean.split(/\t|\r?\n/); const valid = /^-?(?:0|[1-9]\d{0,17})(?:\.\d{0,7}[1-9])?$/; const role = Object.entries(doc.calculation).find(([, id]) => id === initial.id)?.[0]; const bad = parts.findIndex(x => !valid.test(x) || x === '-0' || (['revenueTHB','costJPY'].includes(role ?? '') && x.startsWith('-'))); if (parts.length !== 10 || bad >= 0) { error.textContent = parts.length !== 10 ? '年1〜10の10個の値を貼り付けてください。' : `年${bad+1}の数値形式を確認してください。`; return; } parts.forEach ( (x,i) => { inputs[i].value = x; }); error.textContent = ''; });
+    const close = () => { dialogOpen = false; dialog.remove(); }; form.append(button('取消', close), button('適用', () => { const replacement: Assumption = { ...initial, name: name.value, description: description.value, unit: unit.value, kind: kind.value, value: mode.value === 'annual' ? inputs.map(i => i.value) : inputs[0].value, source: sourceType.value === 'url' ? { text: sourceText.value, url: sourceValue.value } : { text: sourceText.value, projectId: sourceValue.value }, dependsOn: kind.value === 'calculated' ? checks.filter(c => c.checked).map(c => c.value) : [] }; try { host.execute(original ? updateAssumption(original, replacement) : addAssumption(session, host.read(), (({id: _id, ...rest}) => rest)(replacement))); close(); notice.textContent = ''; render(host.read()); } catch (e) { report(e); error.textContent = notice.textContent; } })); dialog.addEventListener('cancel', e => { e.preventDefault(); close(); }); dialog.showModal();
   }
-  function execute(action: () => void) {
-    try {
-      action();
-      status.textContent = '';
-      render();
-    } catch (error) {
-      report(error);
-    }
+  function render(doc: BusinessCase) { rendered = JSON.stringify(doc); session.observe(doc); content.replaceChildren();
+    const toolbar = el('div'); toolbar.className = 'toolbar'; toolbar.append(button(oku ? '円で表示' : '億円で表示', () => { oku = !oku; render(host.read()); })); if (selected) toolbar.append(button('強調を解除', () => { selected = ''; render(host.read()); })); content.append(toolbar);
+    const grid = el('div'); grid.className = 'business-grid'; content.append(grid); const left = el('section'); const right = el('section'); grid.append(left,right); left.append(el('h2','前提'), button('前提を追加', () => edit()));
+    const list = el('div'); list.className = 'business-table'; left.append(list); const assumptions = el('table'); assumptions.className = 'assumptions'; list.append(assumptions); const assumptionHead = el('tr'); ['ID','名前','値 / 年次','単位','種類','出所','操作'].forEach(x => assumptionHead.append(el('th',x))); assumptions.append(assumptionHead); const active = doc.scenarios.find(s => s.id === selected); const highlighted = new Set(active ? [doc.calculation.revenueTHB, doc.calculation.costJPY, doc.calculation.initialInvestmentJPY, doc.calculation.exchangeRate, doc.calculation.taxRate, doc.calculation.discountRate] : []); const visit = (id: string) => { for (const d of doc.assumptions.find(a => a.id === id)?.dependsOn ?? []) if (!highlighted.has(d)) { highlighted.add(d); visit(d); } }; [...highlighted].forEach(visit);
+    for (const a of doc.assumptions) { const row = el('tr'); row.className = 'assumption' + (highlighted.has(a.id) ? ' highlighted' : ''); row.append(el('td',a.id)); const name = el('td',a.name); if (highlighted.has(a.id)) name.append(el('span',' 使用した前提')); row.append(name); const value = el('td'); if (Array.isArray(a.value)) value.append(button(expanded.has(a.id) ? '年次を閉じる ▴' : '年次を開く ▾', () => { if (expanded.has(a.id)) expanded.delete(a.id); else expanded.add(a.id); render(host.read()); })); else value.textContent = assumptionValue(a.value,a.unit,oku).replace(/ (?:億円|円)$/, ''); row.append(value,el('td',a.unit === 'JPY' && oku ? '億円' : (units[a.unit] ?? a.unit))); const kind = el('td'); const mark = el('span','●'); mark.className = 'kind'; mark.dataset.kind = a.kind; mark.setAttribute('aria-hidden','true'); kind.append(mark,document.createTextNode(` ${labels[a.kind]}`)); row.append(kind); const source = el('td'); if (a.source.url && /^https?:\/\//i.test(a.source.url)) { const link = el('a',a.source.text); link.href = a.source.url; link.target = '_blank'; link.rel = 'noopener noreferrer'; source.append(link); } else source.textContent = `${a.source.text} ${a.source.projectId ?? a.source.url ?? ''}`; row.append(source); const actions = el('td'); actions.append(button('編集', () => edit(a)), button('削除', () => { perform(() => host.execute(removeAssumption(a.id))); })); row.append(actions); assumptions.append(row); if (Array.isArray(a.value) && expanded.has(a.id)) { const detail = el('tr'); const cell = el('td'); cell.colSpan = 7; cell.textContent = a.value.map((v,i) => `年${i+1}: ${assumptionValue(v,a.unit,oku)}${a.unit === 'JPY' ? '' : ' ' + (units[a.unit] ?? a.unit)}`).join('　 /　 '); detail.append(cell); assumptions.append(detail); } }
+    right.append(el('h2','シナリオ比較')); const wrap = el('div'); wrap.className = 'business-table'; const table = el('table'); const head = el('tr'); ['シナリオ','NPV','IRR','回収年'].forEach(x => head.append(el('th',x))); table.append(head); wrap.append(table); right.append(wrap);
+    for (const s of doc.scenarios) { const row = el('tr'); row.append(el('th',labels[s.type])); try { const result = calculate(calculationInput(doc,s)); for (const value of [money(result.npvJPY,oku), `${result.irrPercent}%`, result.paybackYear === null ? '10年以内に回収なし' : `${result.paybackYear}年`]) { const cell = el('td'); cell.append(button(value, () => { selected = s.id; render(host.read()); })); row.append(cell); } table.append(row); const details = el('details'); details.append(el('summary',`${labels[s.type]}の年次推移と引用`)); details.append(button('受け入れとして記録',()=>{perform(()=>host.execute(acceptScenario(session,host.read(),s.id)));})); for(const a of doc.assumptions) { const entry=el('p',`${a.id} ${a.name} `); const included=s.assumptionIds.includes(a.id); entry.append(button(included?'引用を外す':'引用を追加',()=>{perform(()=>host.execute(included?removeScenarioReference(s.id,a.id):addScenarioReference(s.id,a.id)));})); if(included) { const override=s.overrides.find(o=>o.assumptionId===a.id); const v=input((Array.isArray(override?.value ?? a.value)?(override?.value ?? a.value as string[] as DecimalValue) as string[]:[override?.value ?? a.value as string]).join('\t'),`${labels[s.type]} ${a.name}の上書き`); entry.append(v,button('上書き',()=>{const value=Array.isArray(a.value)?v.value.split(/[\t\n]/):v.value;perform(()=>host.execute(setScenarioOverride(s.id,a.id,value)));})); if(override) entry.append(button('上書きを外す',()=>{perform(()=>host.execute(removeScenarioOverride(s.id,a.id)));})); } details.append(entry); } right.append(details); } catch(e) { row.append(el('td',`計算できません: ${e instanceof Error ? e.message : ''}`)); table.append(row); } }
+    const annual = el('section'); annual.append(el('h3','年次の現金の流れ')); const chosen = doc.scenarios.find(s => s.id === annualScenario) ?? doc.scenarios.find(s => s.type === 'base') ?? doc.scenarios[0]; if (chosen) { const chooser = select(doc.scenarios.map(s => [s.id,labels[s.type]]), chosen.id, '年次表のシナリオ'); chooser.onchange = () => { annualScenario = chooser.value; render(host.read()); }; annual.append(chooser); try { const result = calculate(calculationInput(doc,chosen)); const scroll = el('div'); scroll.className = 'business-table'; const t = el('table'); t.className = 'annual-table'; const hr = el('tr'); ['項目',...Array.from({length:11},(_,i)=>`年${i}`)].forEach(x=>hr.append(el('th',x))); t.append(hr); for (const [key,label] of [['revenue','売上'],['cost','費用'],['tax','税'],['cashFlow','税引後'],['cumulative','累積']] as const) { const tr=el('tr'); tr.append(el('th',label)); for(const v of result.rows[key]) { const cell=el('td'); cell.append(button(money(v,oku),()=>{selected=chosen.id;render(host.read());})); tr.append(cell); } t.append(tr); } scroll.append(t); annual.append(scroll); } catch(e) { annual.append(el('p',`計算できません: ${e instanceof Error ? e.message : ''}`)); } } right.append(annual);
+    const accepted=el('details'); accepted.append(el('summary','受け入れ済み結果')); for(const a of doc.acceptedResults) { const d=el('details'); d.append(el('summary',`${a.id} ${labels[a.scenario.type]} ${money(a.metrics.npvJPY,oku)} · ${a.metrics.irrPercent}%`)); for(const assumption of a.assumptions) d.append(el('p',`${assumption.id} ${assumption.name}: ${Array.isArray(assumption.value)?assumption.value.join(' / '):assumption.value} ${assumption.unit} · ${assumption.source.text} ${assumption.source.url ?? assumption.source.projectId}`)); accepted.append(d); } right.append(accepted);
+    const sensitivity=el('section'); sensitivity.append(el('h2','感応度（基本シナリオ）')); content.append(sensitivity); const base=doc.scenarios.find(s=>s.type==='base'); if(base) { const baseInput=calculationInput(doc,base); try { const baseline=BigInt(calculate(baseInput).npvJPY); for(const role of ['revenueTHB','costJPY','initialInvestmentJPY','exchangeRate','taxRate','discountRate'] as const) { const a=doc.assumptions.find(x=>x.id===doc.calculation[role])!; const row=el('div'); row.className='sensitivity'; row.append(el('strong',a.name)); for(const factor of [110n,90n]) { try { const original=baseInput[role]; const changed=Array.isArray(original)?original.map(x=>scaled(x,factor)):scaled(original,factor); const delta=BigInt(calculate({...baseInput,[role]:changed}).npvJPY)-baseline; const item=el('div'); const bar=el('span'); bar.className='bar '+(delta<0n?'negative':'positive'); bar.style.width=`${Math.min(100, Number((delta<0n?-delta:delta)*100n/(baseline<0n?-baseline||1n:baseline||1n)))}%`; item.append(el('span',`${factor===110n?'+10%':'−10%'} `),bar,document.createTextNode(` ${delta>0n?'+':''}${money(delta.toString(),oku)}`)); row.append(item); } catch(e) { row.append(el('p',`計算できません: ${e instanceof Error?e.message:''}`)); } } sensitivity.append(row); } } catch(e) { sensitivity.append(el('p',`計算できません: ${e instanceof Error?e.message:''}`)); } }
   }
-  function edit(card?: Card) {
-    const dialog = element('dialog', undefined, 'ep-card-dialog');
-    const form = element('form');
-    const heading = element('h3', card ? 'カードを編集' : '新しいカード');
-    const titleLabel = element('label', 'タイトル');
-    const title = element('input');
-    title.name = 'title';
-    title.required = true;
-    title.value = card?.title ?? '';
-    title.autocomplete = 'off';
-    titleLabel.append(title);
-    const descriptionLabel = element('label', '説明');
-    const description = element('textarea');
-    description.name = 'description';
-    description.rows = 4;
-    description.value = card?.description ?? '';
-    descriptionLabel.append(description);
-    const colorLabel = element('label', '色');
-    const color = element('select');
-    color.name = 'color';
-    color.setAttribute('aria-label', '色');
-    const labels = {
-      blue: 'ブルー',
-      green: 'グリーン',
-      amber: 'アンバー',
-      rose: 'ローズ',
-      purple: 'パープル',
-      slate: 'スレート',
-    };
-    for (const value of CARD_COLORS) {
-      const option = element('option', labels[value]);
-      option.value = value;
-      color.append(option);
-    }
-    color.value = card?.color ?? 'blue';
-    colorLabel.append(color);
-    const errorMessage = element('p', '', 'ep-card-error');
-    errorMessage.setAttribute('role', 'alert');
-    const actions = element('div', undefined, 'ep-card-dialog-actions');
-    const cancel = element('button', 'キャンセル');
-    cancel.type = 'button';
-    const submit = element('button', card ? '変更を適用' : 'カードを追加', 'ep-card-primary');
-    submit.type = 'submit';
-    cancel.onclick = () => dialog.close();
-    actions.append(cancel, submit);
-    form.append(heading, titleLabel, descriptionLabel, colorLabel, errorMessage, actions);
-    dialog.append(form);
-    root.append(dialog);
-    const hasPendingInput = () =>
-      title.value !== (card?.title ?? '') ||
-      description.value !== (card?.description ?? '') ||
-      color.value !== (card?.color ?? 'blue');
-    const guardPendingInput = (event: BeforeUnloadEvent) => {
-      if (dialog.open && hasPendingInput()) {
-        event.preventDefault();
-        event.returnValue = '';
-      }
-    };
-    const cleanupDialog = () => {
-      window.removeEventListener('beforeunload', guardPendingInput);
-      dialogCleanups.delete(cleanupDialog);
-    };
-    window.addEventListener('beforeunload', guardPendingInput);
-    dialogCleanups.add(cleanupDialog);
-    dialog.addEventListener(
-      'close',
-      () => {
-        cleanupDialog();
-        dialog.remove();
-      },
-      { once: true },
-    );
-    form.onsubmit = (event) => {
-      event.preventDefault();
-      try {
-        if (card) {
-          const current = host.read().cards.find((item) => item.id === card.id);
-          if (
-            !current || current.title !== card.title ||
-            current.description !== card.description || current.color !== card.color
-          )
-            throw new Error('このカードは編集中に変更されました。入力を控えてキャンセルし、現在の内容を開き直してください。');
-        }
-        const value = {
-          title: title.value,
-          description: description.value,
-          color: color.value as Card['color'],
-        };
-        host.execute(
-          card ? updateCard(card.id, value) : addCard({ id: crypto.randomUUID(), ...value }),
-        );
-        dialog.close();
-        status.textContent = '';
-        render();
-      } catch (error) {
-        errorMessage.textContent =
-          error instanceof Error ? error.message : '入力を確認してください。';
-      }
-    };
-    // A modal keeps the example's explicit apply/cancel inputs separate from Host actions.
-    // Editors needing inline pending inputs must adopt the appropriate input contract.
-    dialog.showModal();
-    title.focus();
-  }
-  add.onclick = () => edit();
-
-  function render(content = host.read()) {
-    renderedContent = JSON.stringify(content);
-    count.textContent = `${content.cards.length} CARDS`;
-    add.disabled = content.cards.length >= 100;
-    list.replaceChildren();
-    if (!content.cards.length)
-      list.append(
-        element('p', '最初のカードを追加して、自分のEditorを作り始めましょう。', 'ep-card-empty'),
-      );
-    content.cards.forEach((card, index) => {
-      const item = element('article', undefined, 'ep-card');
-      item.setAttribute('role', 'listitem');
-      item.dataset.color = card.color;
-      item.dataset.cardId = card.id;
-      const top = element('div', undefined, 'ep-card-top');
-      const number = element('span', String(index + 1).padStart(2, '0'), 'ep-card-number');
-      top.append(number);
-      const title = element('h3', card.title);
-      const description = element(
-        'p',
-        card.description || '説明を追加できます。',
-        'ep-card-description',
-      );
-      const actions = element('div', undefined, 'ep-card-actions');
-      const editButton = element('button', '編集');
-      editButton.type = 'button';
-      editButton.setAttribute('aria-label', `「${card.title}」を編集`);
-      editButton.onclick = () => edit(card);
-      const up = element('button', '↑');
-      up.type = 'button';
-      up.disabled = index === 0;
-      up.setAttribute('aria-label', `「${card.title}」を前へ移動`);
-      up.onclick = () => execute(() => host.execute(moveCard(card.id, -1)));
-      const down = element('button', '↓');
-      down.type = 'button';
-      down.disabled = index === content.cards.length - 1;
-      down.setAttribute('aria-label', `「${card.title}」を後ろへ移動`);
-      down.onclick = () => execute(() => host.execute(moveCard(card.id, 1)));
-      const remove = element('button', '削除', 'ep-card-remove');
-      remove.type = 'button';
-      remove.setAttribute('aria-label', `「${card.title}」を削除`);
-      remove.onclick = () => execute(() => host.execute(removeCard(card.id)));
-      actions.append(editButton, up, down, remove);
-      item.append(top, title, description, actions);
-      list.append(item);
-    });
-  }
-  render();
-  // draft.1 exposes read(), not subscribe(). PaoBub keeps this Surface mounted
-  // across Host Undo/Redo and proposals. Refresh only the list; a pending modal
-  // and its inputs stay attached until the user applies or cancels them.
-  const refresh = window.setInterval(() => {
-    try {
-      const content = host.read();
-      if (JSON.stringify(content) !== renderedContent) render(content);
-    } catch (error) {
-      report(error);
-    }
-  }, 200);
-  return () => {
-    window.clearInterval(refresh);
-    for (const cleanup of dialogCleanups) cleanup();
-    root.remove();
-  };
+  render(host.read()); const timer=setInterval(()=>{const current=host.read(); if(JSON.stringify(current)!==rendered) render(current);},200); return ()=>{clearInterval(timer); if(dialogOpen) overlay.replaceChildren(); root.remove();};
 }
