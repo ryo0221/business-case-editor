@@ -1,0 +1,26 @@
+{
+  "name": "@editor-platform/artifact-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pinned public Open Editor Platform source subset for the editor template",
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ryo0221/open-editor-platform.git",
+    "directory": "packages/artifact-core"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src",
+    "LICENSE",
+    "NOTICE.md"
+  ],
+  "openEditorTemplateVendor": {
+    "sourceCommit": "3808efe94d2171c9bbf3d635525ccb5bf9a4a8ff",
+    "packagingModified": "2026-11-16",
+    "originalManifest": "../../upstream-manifests/artifact-core.json"
+  }
+}
