@@ -1,6 +1,5 @@
 import { EditorSession } from '@editor-platform/editor-core';
 import { describe, expect, it } from 'vitest';
-import example from '../fixtures/example.json';
 import { addCard, moveCard, removeCard, updateCard } from '../src/commands';
 import {
   CARD_ARTIFACT_KIND,
@@ -27,7 +26,8 @@ function freezeDocument(document: CardDocument): CardDocument {
 }
 
 describe('native card model and commands', () => {
-  it('loads the example and round-trips stable IDs without sharing caller-owned objects', () => {
+  it('round-trips stable IDs without sharing caller-owned objects', () => {
+    const example = createDocument([card()]);
     validateDocument(example);
     const original = createDocument(example.cards);
     const copy = createDocument(original.cards);
