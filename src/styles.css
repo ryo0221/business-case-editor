@@ -19,3 +19,8 @@
 .sensitivity { display:grid; grid-template-columns:12rem 1fr 1fr; gap:.5rem; align-items:center; margin:.5rem 0; }
 .bar { display:inline-block; height:.8rem; max-width:45%; background:#238263; } .bar.negative { background:#bd6254; }
 @media(max-width:800px) { .business-grid { grid-template-columns:minmax(0,1fr); } .sensitivity { grid-template-columns:1fr; } }
+.assumptions .assumption { border: 0; }
+.assumptions .highlighted td { background: #e8f7ef; border-top: 2px solid #1b8c67; border-bottom: 2px solid #1b8c67; }
+.assumptions .highlighted td:first-child { border-left: 2px solid #1b8c67; }
+.assumptions .highlighted td:last-child { border-right: 2px solid #1b8c67; }
+.annual-table button { white-space: nowrap; }
