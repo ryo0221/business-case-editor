@@ -380,6 +380,30 @@
   {
    "from": "tests/calculation.test.ts",
    "to": "SCR-03"
+  },
+  {
+   "from": "src/business-case.ts",
+   "to": "CMD-09"
+  },
+  {
+   "from": "src/business-case.ts",
+   "to": "CMD-10"
+  },
+  {
+   "from": "src/business-case.ts",
+   "to": "SCR-03"
+  },
+  {
+   "from": "tests/business-case.test.ts",
+   "to": "CMD-09"
+  },
+  {
+   "from": "tests/business-case.test.ts",
+   "to": "CMD-10"
+  },
+  {
+   "from": "tests/business-case.test.ts",
+   "to": "SCR-03"
   }
  ],
  "exemptions": []
