@@ -356,6 +356,30 @@
   {
    "from": "SCR-04",
    "to": "CMD-15"
+  },
+  {
+   "from": "src/calculation.ts",
+   "to": "CMD-12"
+  },
+  {
+   "from": "src/calculation.ts",
+   "to": "SCR-01"
+  },
+  {
+   "from": "src/calculation.ts",
+   "to": "SCR-03"
+  },
+  {
+   "from": "tests/calculation.test.ts",
+   "to": "CMD-12"
+  },
+  {
+   "from": "tests/calculation.test.ts",
+   "to": "SCR-01"
+  },
+  {
+   "from": "tests/calculation.test.ts",
+   "to": "SCR-03"
   }
  ],
  "exemptions": []
